@@ -1,0 +1,117 @@
+openapi: "3.0.2"
+info:
+    title: Products API
+    version: "1.0"
+servers:
+    - url: http://localhost:8080/
+components:
+    schemas:
+        error:
+            type: object
+            properties:
+                detail:
+                    description: error message
+                    type: string
+                    required: true
+        Cursor:
+            type: string
+            description: |
+                Строка, которая генерируется на стороне сервиса. Клиент не должен делать
+                предположений о внутренней структуре курсора.
+
+                Используется для организации пагинации. Для получения следующей страницы
+                клиент обязан осуществить запрос с курсором из последнего ответа сервиса.
+
+        ProductCategory:
+            type: string
+            enum:
+                - FRUITS
+                - MEAT
+                - MILK
+                - BAKERY
+                - FROZEN
+                - PRESERVES
+                - DRINKS
+
+        Filter:
+            type: object
+            description: |
+                Фильтр для поиска товаров
+            properties:
+                name:
+                    type: string
+                    required: false
+                cost_min:
+                    type: number
+                    required: false
+                cost_max:
+                    type: number
+                    required: false
+                category:
+                    $ref: '#/components/schemas/ProductCategory'
+                    required: false
+        Limit:
+            description: |
+                Сколько элементов возвращать в ответе.
+                Если ответ больше, то он обрезается до лимита.
+                Если не указано, то используется значение по умолчанию.
+            type: integer
+            minimum: 1
+paths:
+    /v1/products:
+        get:
+            description: list all products with filters
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            additionalProperties: false
+                            properties:
+                                cursor:
+                                    $ref: '#/components/schemas/Cursor'
+                                    required: false
+                                filter:
+                                    $ref: '#/components/schemas/Filter'
+                                    required: false
+                                limit:
+                                    $ref: '#/components/schemas/Limit'
+                                    required: false
+            responses:
+                '200':
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                required:
+                                  - products
+                                properties:
+                                    cursor:
+                                        $ref: '#/components/schemas/Cursor'
+                                        required: false
+                                    products:
+                                        type: array
+                                        items:
+                                            type: object
+                                            desrciption: Product
+                                            properties:
+                                                name:
+                                                    type: string
+                                                    required: true
+                                                price:
+                                                    type: number
+                                                    required: true
+                                                quantity:
+                                                    type: number
+                                                    required: true
+                                                category:
+                                                    $ref: '#/components/schemas/ProductCategory'
+                                                    required: true
+                '400':
+                    description: invalid input parameters
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/error"
